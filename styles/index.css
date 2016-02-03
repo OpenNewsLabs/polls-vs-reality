@@ -1,0 +1,10 @@
+body{
+	margin:0;
+}
+#model{
+	width:600px;
+	height:600px;
+
+	font-family: Helvetica, Arial, sans-serif;
+	font-weight: 100;
+}
