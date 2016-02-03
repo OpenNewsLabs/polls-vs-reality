@@ -64,17 +64,17 @@ for(var i=0;i<data.length;i+=4){
 }
 
 // Draw lines
+var demX = 162;
+var repX = 162+275;
+var offY = 50;
 var bg = model.group(
-	model.rect(162,100,1,450).attr({fill:"#ddd"}),
-	model.rect(162+275,100,1,450).attr({fill:"#ddd"}),
-	model.rect(50,100,225,3).attr({fill:"#333"}),
-	model.rect(325,100,225,3).attr({fill:"#333"})
+	model.rect(demX-1,offY,2,450).attr({fill:"#ddd"}),
+	model.rect(repX-1,offY,2,450).attr({fill:"#ddd"}),
+	model.rect(50,offY,225,3).attr({fill:"#333"}),
+	model.rect(325,offY,225,3).attr({fill:"#333"})
 );
 
 // Draw dots
-var demX = 162;
-var repX = 162+275;
-var offY = 100;
 var SCALE = 13;
 var ANIM_SPEED = 150;
 var ROW_HEIGHT = 95;
@@ -89,14 +89,17 @@ function Pollster(pollster){
 	self.pollster = pollster;
 
 	// Mouse funcs
-	self.onMouseOver = function(){
+	self.onMouseOver = function(error,x,y,align){
 		for(var i=0;i<self.dots.length;i++){
 			var dot = self.dots[i];
 			dot.animate({opacity:1},ANIM_SPEED,mina.easeinout);
 		}
 		self.demLine.animate({opacity:1},ANIM_SPEED,mina.easeinout);
 		self.repLine.animate({opacity:1},ANIM_SPEED,mina.easeinout);
-		console.log(self.pollster.name);
+
+		// Tooltip
+		tooltip.show(pollster.name,error,x,y,align);
+
 	};
 	self.onMouseOut = function(){
 		for(var i=0;i<self.dots.length;i++){
@@ -105,6 +108,10 @@ function Pollster(pollster){
 		}
 		self.demLine.animate({opacity:0},ANIM_SPEED,mina.easeinout);
 		self.repLine.animate({opacity:0},ANIM_SPEED,mina.easeinout);
+
+		// Tooltip
+		tooltip.hide();
+
 	};
 
 	// My Dots
@@ -129,7 +136,11 @@ function Pollster(pollster){
 		x+=demX;
 		y+=offY;
 		var dot = dotsSVG.circle(x,y,8).attr({fill:"#2727cc", opacity:0.15});
-		dot.mouseover(self.onMouseOver);
+		(function(error,x,y){
+			dot.mouseover(function(){
+				self.onMouseOver(error,x,y,1);
+			});
+		})(year.dem,x,y);
 		dot.mouseout(self.onMouseOut);
 		self.dots.push(dot);
 		self.demPath += Math.round(x)+","+Math.round(y);
@@ -140,7 +151,11 @@ function Pollster(pollster){
 		x+=repX;
 		y+=offY;
 		var dot = dotsSVG.circle(x,y,8).attr({fill:"#cc2727", opacity:0.3});
-		dot.mouseover(self.onMouseOver);
+		(function(error,x,y){
+			dot.mouseover(function(){
+				self.onMouseOver(error,x,y,-1);
+			});
+		})(year.rep,x,y);
 		dot.mouseout(self.onMouseOut);
 		self.dots.push(dot);
 		self.repPath += Math.round(x)+","+Math.round(y);
@@ -159,7 +174,7 @@ for(var i=0;i<pollsters.length;i++){
 // Draw Labels
 var labelsSVG = model.group();
 labelsSVG.attr({
-	color: "#333",
+	fill: "#333",
 	"text-anchor": "middle",
 	"font-size": 20
 });
@@ -175,4 +190,82 @@ labelsSVG.text(300,offY+ROW_HEIGHT*1,"2000").attr({dy:"5px"});
 labelsSVG.text(300,offY+ROW_HEIGHT*2,"2004").attr({dy:"5px"});
 labelsSVG.text(300,offY+ROW_HEIGHT*3,"2008").attr({dy:"5px"});
 labelsSVG.text(300,offY+ROW_HEIGHT*4,"2012").attr({dy:"5px"});
+
+// Tooltips
+function Tooltip(){
+
+	var self = this;
+
+	// SVG
+	var svg = model.group();
+	svg.attr({
+		fill: "#ddd",
+		"text-anchor": "middle",
+		"font-size": 16,
+		"dominant-baseline": "central",
+		opacity:0
+	});
+
+	// BG
+	var block = svg.rect(-50, -20, 100, 60, 20, 20);
+	block.attr({
+		fill: "rgba(30,30,30,0.80)"
+	});
+
+	// Label
+	var pollsterName = svg.text(0, 0, "tooltip!");
+	var errorAmount = svg.text(0, 20, "off by...");
+
+	// Show
+	self.show = function(name,error,x,y,align){
+
+		// name
+		pollsterName.attr({
+			text: name
+		});
+
+		// error
+		var errorMessage;
+		error = Math.round(error);
+		if(error<0){
+			errorMessage = "underestimated by "+Math.abs(error)+"%";
+		}else if(error>0){
+			errorMessage = "overestimated by "+error+"%";
+		}else{
+			errorMessage = "exactly on target!";
+		}
+		errorAmount.attr({
+			text: errorMessage
+		});
+
+
+		// the block size
+		var width = Math.max(pollsterName.node.clientWidth, errorAmount.node.clientWidth)+30;
+		block.attr({
+			x: -width/2,
+			width: width
+		});
+
+		// Transform, where...
+		var tx = x + align*((width/2)+15);
+		var ty = y - 10;
+		svg.transform("translate("+tx+","+ty+")");
+
+		// show it!
+		self.SHOULD_BE_SHOWING = true;
+		svg.attr({display:"block"});
+		svg.animate({opacity:1},ANIM_SPEED,mina.easeinout);
+
+	};
+
+	self.SHOULD_BE_SHOWING = false;
+	self.hide = function(){
+		self.SHOULD_BE_SHOWING = false;
+		svg.animate({opacity:0},ANIM_SPEED,mina.easeinout,function(){
+			if(!self.SHOULD_BE_SHOWING) svg.attr({display:"none"});
+		});
+	};
+
+}
+var tooltip = new Tooltip();
 

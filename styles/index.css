@@ -1,10 +1,40 @@
 body{
 	margin:0;
-}
-#model{
-	width:600px;
-	height:600px;
 
 	font-family: Helvetica, Arial, sans-serif;
 	font-weight: 100;
+	font-size: 19px;
+}
+#content{
+	width:600px;
+	margin: 50px auto;
+}
+#model{
+	width:600px;
+	height:500px;
+}
+.words{
+	width:450px;
+	margin:0 auto;
+	text-align: justify;
+}
+#title{
+	margin-bottom: 50px;
+	font-size:73px;
+	text-align:center;
+	font-weight: 100;
+	border-bottom: 3px solid black;
+}
+#title span{
+	position: relative;
+	top:-10px;
+	font-size: 30px;
+}
+b{
+	font-weight:bold;
+}
+hr{
+	border:none;
+	border-bottom: 2px dashed #ccc;
+	margin: 40px 0;
 }
